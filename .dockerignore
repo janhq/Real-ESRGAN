@@ -1,0 +1,4 @@
+*.pyc
+*.Dockerfile
+experiments/
+model_repo/

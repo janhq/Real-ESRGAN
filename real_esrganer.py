@@ -13,19 +13,19 @@ class RealESRGANer(nn.Module):
 
     Args:
         scale (int): Upsampling scale factor used in the networks. It is usually 2 or 4.
-        ts_model_path (str): The path to the scripted RRDBNet(num_in_ch=3, num_out_ch=3, num_feat=64, num_block=23, num_grow_ch=32, scale=4) model
+        ts_model (torch.jit.ScriptModule): Scripted RRDBNet(num_in_ch=3, num_out_ch=3, num_feat=64, num_block=23, num_grow_ch=32, scale=4) model
         half (float): Whether to use half precision during inference. Default: False.
     """
 
     def __init__(self,
+                 ts_model: torch.jit.ScriptModule,
                  scale: int = 4,
-                 ts_model_path='./scripted.pt',
                  half=False,
                  device='cuda'):
         super().__init__()
         self.device = device
         self.scale = scale
-        self.model = torch.jit.load(ts_model_path, map_location=self.device)
+        self.model = ts_model
         self.half = half
         if self.half:
             self.model = self.model.half()

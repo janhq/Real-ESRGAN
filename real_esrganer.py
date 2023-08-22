@@ -164,6 +164,19 @@ class RealESRGANer(nn.Module):
     #     output = self.post_process(output, mod_scale=mod_scale, out_scale=out_scale, org_h=org_h, org_w=org_w, mod_pad_h=mod_pad_h, mod_pad_w=mod_pad_w, pre_pad=pre_pad)
     #     return output
 
+    def make_img_shape_divisible_by_8(self, img: torch.Tensor) -> torch.Tensor:
+        height, width = img.shape[:2]
+        target_height = (height // 8 + 1) * 8 if height % 8 != 0 else height
+        target_width = (width // 8 + 1) * 8 if width % 8 != 0 else width
+        if target_height == height and target_width == width:
+            return img
+        img = img.float() / 255.0
+        img = img.permute(2, 0, 1).unsqueeze(0)
+        img = F.interpolate(img, (target_height, target_width))
+        img = img.squeeze().permute(1, 2, 0)
+        img = (img * 255.0).round().to(torch.uint8)
+        return img
+
     def forward(self,
                 img: torch.Tensor,
                 out_scale: torch.Tensor = torch.Tensor([4]).to(torch.float32),
@@ -177,6 +190,7 @@ class RealESRGANer(nn.Module):
         tile = int(tile)
         tile_pad = int(tile_pad)
         pre_pad = int(pre_pad)
+        img = self.make_img_shape_divisible_by_8(img)
         org_h, org_w = img.shape[:2]
         img, mod_scale, mod_pad_h, mod_pad_w = self.pre_process(img, pre_pad=pre_pad)
         if tile > 0:
